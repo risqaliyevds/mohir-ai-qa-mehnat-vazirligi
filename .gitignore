@@ -1,6 +1,9 @@
 # Byte-compiled / optimized / DLL files
 
 /env
+/source
+/configs
+
 
 
 
