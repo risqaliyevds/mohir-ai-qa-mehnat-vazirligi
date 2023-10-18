@@ -14,13 +14,9 @@ def correct_unicode(text):
     return corrected_text
 
 
-def detect_and_translate(text, target_language='uz'):
+def translateQuestion(text, source_language="en", target_language='uz'):
     # Initialize the Translate client
     translate_client = translate_v2.Client()
-
-    # Detect the source language
-    detection = translate_client.detect_language(text)
-    source_language = detection['language']
 
     # Translate the text to the target language (Russian)
     translation = translate_client.translate(
@@ -46,10 +42,10 @@ def conversation(openai, retriver, CUSTOM_QUESTION_PROMPT):
 
     while True:
         question = input("\nQanday savolingiz mavjud: ")
-        question = detect_and_translate(question, target_language='en')
+        question = translateQuestion(question, target_language='en')
         answer = chain({"question": question})
         answer = correct_unicode(
-            detect_and_translate(answer['answer'], target_language='uz'))
+            translateQuestion(answer['answer'], target_language='uz'))
         pprint(f"AI Assistant: {answer}")
         ans = input(
             "\n Yana savolingiz mavjudmi? (ha/yo'q) yoki (stop) yozing)")

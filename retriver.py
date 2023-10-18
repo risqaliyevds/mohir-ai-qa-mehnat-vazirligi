@@ -2,6 +2,9 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
+import os
+
+os.environ['BOOK_PATH'] = 'source/Mehnat kodeksi en.pdf'
 
 
 class QASystem:
@@ -37,5 +40,4 @@ class QASystem:
         return retriever
 
 
-retriver = QASystem(
-    '/home/mata_/projects/qa for mehnat vazirligi/source/enFromRu.pdf').retriever()
+retriver = QASystem(os.environ['BOOK_PATH']).retriever()

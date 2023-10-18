@@ -11,9 +11,8 @@ openai = OpenAI(
     openai_api_key=os.environ["OPENAI_API_KEY"]
 )
 
-
-custom_template = """You are a helpful assistant of the Ministry of Labor 
-and your name is Mohir. Your task extractive answer to question based on the context. 
+custom_template = """You are a helpful assistant and your name is Mohir.
+Your task extractive answer to question based on the context. 
 If the question cannot be answered using the informationn
 provided answer with "I don't have enough information to answer the question.
 
