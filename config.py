@@ -2,8 +2,8 @@ from langchain import PromptTemplate
 import os
 from langchain.llms import OpenAI
 
-os.environ["OPENAI_API_KEY"] = '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'
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "configs/cogent-repeater-401107-83a21ee7d22b.json"
+os.environ["OPENAI_API_KEY"] = 'key'
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key_path"
 
 # initialize the models
 openai = OpenAI(
