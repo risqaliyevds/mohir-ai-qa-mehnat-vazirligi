@@ -1,47 +1,40 @@
 import gradio as gr
-import os
 import time
-from google.cloud import translate_v2
-import html
-from langchain.chains.conversation.memory import ConversationBufferMemory
 from config import *
-from retriver import retriver
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
-from pprint import pprint
+from retriever import retrieverQA
 from main import correct_unicode, translateQuestion
-
-
-memory = ConversationBufferMemory(
-    memory_key="chat_history", return_messages=True)
-
-chain = ConversationalRetrievalChain.from_llm(
-    openai,
-    retriever=retriver,  # see below for vectorstore definition
-    memory=memory,
-    condense_question_prompt=CUSTOM_QUESTION_PROMPT)
+from langchain.chat_models import ChatOpenAI
+from langchain.chains.question_answering import load_qa_chain
 
 
 def add_text(history, text):
     history = history + [(text, None)]
-    return history, gr.Textbox(value="", interactive=False)
-
+    return history, text
 
 def bot(history, lang_dropdown):
     response = history[-1][0]
     history[-1][1] = ""
 
+    llm = ChatOpenAI(
+        model_name="gpt-4",
+        temperature=0,
+        openai_api_key=os.environ['OPENAI_API_KEY'])
+
+    qa_chain = load_qa_chain(llm, chain_type="stuff")
+
     if lang_dropdown == "UZ":
         question_uz = response
         question_en = translateQuestion(
             question_uz, source_language="uz", target_language='en')
-        answer_en = chain({"question": question_en})
+        matched_docs = retrieverQA.get_relevant_documents(question_en)
+        answer_en = qa_chain.run(input_documents = matched_docs, question = question_en)
         answer_uz = correct_unicode(
-            translateQuestion(answer_en['answer'], source_language="en", target_language='uz'))
+            translateQuestion(answer_en, source_language="en", target_language='uz'))
         response = answer_uz
     else:
-        answer_en = chain({"question": response})
-        response = answer_en['answer']
+        matched_docs = retrieverQA.get_relevant_documents(response)
+        answer_en = qa_chain.run(input_documents = matched_docs, question = response)
+        response = answer_en
 
     for character in response:
         history[-1][1] += character
@@ -55,8 +48,8 @@ with gr.Blocks() as demo:
         elem_id="chatbot",
         bubble_full_width=False,
         avatar_images=(
-            None, (os.path.join(os.path.dirname(__file__), "source/logo.jpg"))),
-    )
+            None, (os.path.join(os.path.dirname(__file__), os.environ["BOT_LOGO_PATH"])),
+    ))
 
     with gr.Row():
         # Add dropdown for language selection

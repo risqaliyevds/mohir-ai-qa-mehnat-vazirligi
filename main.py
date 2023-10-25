@@ -2,7 +2,7 @@ from google.cloud import translate_v2
 import html
 from langchain.chains.conversation.memory import ConversationBufferMemory
 from config import *
-from retriver import retriver
+from retriever import retrieverQA
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from pprint import pprint
@@ -36,7 +36,7 @@ def conversation(openai, retriver, CUSTOM_QUESTION_PROMPT):
         memory_key="chat_history", return_messages=True,)
     chain = ConversationalRetrievalChain.from_llm(
         openai,
-        retriever=retriver,  # see below for vectorstore definition
+        retriever=retrieverQA,  # see below for vectorstore definition
         memory=memory,
         condense_question_prompt=CUSTOM_QUESTION_PROMPT)
 
