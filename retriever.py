@@ -1,36 +1,39 @@
 from langchain.document_loaders import PyPDFLoader
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Pinecone
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import FAISS
 import pinecone
+import glob
 import os
 
-def initializationPinocone():
-    pinecone.init(
-        api_key=os.environ['PINOCONE_KEY'],
-        environment=os.environ['PINOCONE_ENV']
-    )
-    # return pinecone.Index(index_name)
 
 def getEmbeddings():
     return OpenAIEmbeddings(openai_api_key=os.environ['OPENAI_API_KEY'])
 
-def getExistsDocs(index_name, embeddings):
-    return Pinecone.from_existing_index(index_name, embeddings)
+def getExistsDocs(name_of_db, embeddings):
+    return FAISS.load_local(os.environ["DB_PATH"] + "/" + name_of_db, embeddings)
 
-def createDocs(index_name, doc_path, embeddings):
-    pinecone.create_index(index_name, dimension=1536)
+def createDocs(name_of_db, doc_path, embeddings):
     loader = PyPDFLoader(doc_path)
-    pages = loader.load_and_split()
-    return Pinecone.from_documents(pages, embeddings, index_name=index_name)
+    documents = loader.load_and_split()
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    docs = text_splitter.split_documents(documents)
+    db = FAISS.from_documents(docs, embeddings)
+    save_path = os.environ['DB_PATH'] + "/" + name_of_db
+    db.save_local(save_path)
 
-def getRetriever(index_name):
-    initializationPinocone()
+def getRetriever(name_of_db):
     embeddings = getEmbeddings()
+    folders = glob.glob(os.environ['DB_PATH'] + "/*")
+    db_folders = [str(path).split("\\")[-1] for path in folders]
 
-    if index_name in pinecone.list_indexes():
-        docsearch = getExistsDocs(index_name, embeddings)
+    if name_of_db in db_folders:
+        docsearch = getExistsDocs(name_of_db, embeddings)
+        print("Database exists")
     else:
-        docsearch = createDocs(index_name, os.environ['BOOK_PATH'], embeddings)
+        createDocs(name_of_db, os.environ['BOOK_PATH'], embeddings)
+        docsearch = getExistsDocs(name_of_db, embeddings)
+        print("Database created")
 
     retriever = docsearch.as_retriever(
             search_type="similarity", search_kwargs={"k": 5})
